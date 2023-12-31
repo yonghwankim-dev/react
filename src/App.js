@@ -1,16 +1,26 @@
 import { Component } from 'react';
 import TOC from './components/TOC'
-import Content from './components/Content';
 import Subject from './components/Subject';
+import Control from './components/Control'
 import './App.css';
+import ReadContent from './components/ReadContent';
+import CreateContent from './components/CreateContent';
+import UpdateContent from './components/UpdateContent';
 
 class App extends Component {
   constructor(props){
     super(props);
+    this.max_count_id = 3;
     this.state = {
+      mode: 'welcome',
+      selected_content_id: 2,
       subject:{
         title: 'WEB',
         sub: 'world wide web!',
+      },
+      welcome: {
+        title: 'welcome',
+        desc: 'Hello, React!!'
       },
       contents:[
         {
@@ -32,14 +42,117 @@ class App extends Component {
     }
   }
 
+  getReadContent(){
+    var i = 0;
+    console.log("selected_content_id", this.state.selected_content_id);
+    while (i < this.state.contents.length){
+      var data = this.state.contents[i];
+      console.log("data", data);
+      if(data.id === this.state.selected_content_id){
+        return data;
+      }
+      i = i + 1;
+    }
+  }
+
+  getContent(){
+    var _title, _desc, _article = null; // props
+    if(this.state.mode === 'welcome'){
+      _title = this.state.welcome.title; // props 변경되어 다시 렌더링
+      _desc = this.state.welcome.desc;
+      _article = <ReadContent title={_title} desc={_desc}></ReadContent>
+    }else if(this.state.mode === 'read'){
+      var _content = this.getReadContent();
+      console.log("_content", _content);
+      _article = <ReadContent title={_content.title} desc={_content.desc}></ReadContent>
+    }else if(this.state.mode === 'create'){
+      _article = <CreateContent onSubmit={function(_title, _desc){
+        // add content to this.state.contents
+        this.max_count_id = this.max_count_id + 1;
+        // var _contents = this.state.contents.concat({id: this.max_count_id, title:_title, desc:_desc});
+        var _contents = Array.from(this.state.contents);
+        _contents.push({id: this.max_count_id, title:_title, desc:_desc});
+        this.setState({
+          contents: _contents,
+          mode: 'read',
+          selected_content_id: this.max_count_id
+        });
+        console.log(_title, _desc);
+      }.bind(this)}></CreateContent>
+    }else if(this.state.mode === 'update'){
+      _content = this.getReadContent();
+      _article = <UpdateContent data={_content} onSubmit={function(_id, _title, _desc){
+        var _contents = Array.from(this.state.contents);
+        var i = 0;
+        while(i < _contents.length){
+          if(_contents[i].id === _id){
+            _contents[i] = {id: _id, title: _title, desc: _desc};
+            break;
+          } 
+          i = i + 1;
+        }
+        
+        this.setState({
+          contents: _contents,
+          mode: 'read'
+        });
+      }.bind(this)}></UpdateContent>
+    }
+    return _article;
+  }
+
   render (){
+    console.log('App Render')
+    console.log('render', this);
     return(
       <div className="App">
-        <Subject title={this.state.subject.title} sub={this.state.subject.sub}></Subject>
+        <Subject 
+          title={this.state.subject.title} 
+          sub={this.state.subject.sub}
+          onChangePage={function(){
+            this.setState({
+              mode: 'welcome'
+            })
+          }.bind(this)}>
+          </Subject>
         <Subject title="React" sub="For UI"></Subject>
-        <TOC data={this.state.contents}></TOC>
+        <TOC onChangePage={function(id){
+          this.setState({
+            mode: 'read',
+            selected_content_id: Number(id)
+        })
+          console.log("selected_content_id", this.state.selected_content_id);
+        }.bind(this)} data={this.state.contents}></TOC>
 
-        <Content title="HTML" desc="HTML is HyperText Markup Language"></Content>
+        <Control onChangeMode={function(_mode){
+          if(_mode === 'delete'){
+            if(window.confirm("정말 삭제하시겠습니까?")){
+              var i = 0;
+              var _contents = Array.from(this.state.contents);
+              while(i < _contents.length){
+                console.log("_contents[i]", _contents[i].id);
+                if(_contents[i].id === this.state.selected_content_id){
+                  _contents.splice(i, 1);
+                  console.log("spliced contents", _contents);
+                  break;
+                }
+                i = i + 1;
+              }
+              console.log("_contents", _contents);
+              this.setState({
+                mode: 'welcome',
+                contents: _contents
+              })
+              alert("삭제되었습니다.");
+            }
+          }else{
+            this.setState({
+              mode: _mode
+            })
+          }
+          
+        }.bind(this)}></Control>
+        {this.getContent()}
       </div>
     )
   }
