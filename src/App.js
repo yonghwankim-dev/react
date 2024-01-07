@@ -67,17 +67,16 @@ class App extends Component {
       _article = <ReadContent title={_content.title} desc={_content.desc}></ReadContent>
     }else if(this.state.mode === 'create'){
       _article = <CreateContent onSubmit={function(_title, _desc){
-        // add content to this.state.contents
         this.max_count_id = this.max_count_id + 1;
-        // var _contents = this.state.contents.concat({id: this.max_count_id, title:_title, desc:_desc});
         var _contents = Array.from(this.state.contents);
+
         _contents.push({id: this.max_count_id, title:_title, desc:_desc});
+
         this.setState({
           contents: _contents,
           mode: 'read',
           selected_content_id: this.max_count_id
         });
-        console.log(_title, _desc);
       }.bind(this)}></CreateContent>
     }else if(this.state.mode === 'update'){
       _content = this.getReadContent();
